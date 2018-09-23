@@ -8,7 +8,7 @@ git clone https://github.com/lergor/ComputerGraphics.git
 * Enter the directory *ComputerGraphics*
 * Switch to the *fractal* branch `git checkout fractal`
 
-* Enter `fractal` directory and run
+* Enter the `fractal` directory and run
 ```
 cmake . && make
 ./fractal
