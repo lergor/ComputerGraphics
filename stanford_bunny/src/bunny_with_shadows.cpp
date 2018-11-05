@@ -3,6 +3,17 @@
 #include "model/model.h"
 #include "program/shaders.h"
 
+float planeVertices[] = {
+        // positions            // normals         // texcoords
+        10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,  10.0f,  0.0f,
+        -10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,   0.0f,  0.0f,
+        -10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,   0.0f, 10.0f,
+
+        10.0f, -0.5f,  10.0f,  0.0f, 1.0f, 0.0f,  10.0f,  0.0f,
+        -10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,   0.0f, 10.0f,
+        10.0f, -0.5f, -10.0f,  0.0f, 1.0f, 0.0f,  10.0f, 10.0f
+};
+
 BunnyWithShadows::BunnyWithShadows(int width, int height)
         : window_width_(width), window_height_(height) {}
 
@@ -33,11 +44,7 @@ void BunnyWithShadows::show() {
     init();
     glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 
-    GLuint VertexArrayID;
-    glGenVertexArrays(1, &VertexArrayID);
-    glBindVertexArray(VertexArrayID);
-
-    Shaders color_program("../shaders/1.vert", "../shaders/1.frag");
+    Shaders lightning_program("../shaders/lightning.vert", "../shaders/lightning.frag");
     Shaders point_light_program("../shaders/point_light.vert", "../shaders/point_light.frag");
 
     Model bunny_model("../resources/stanford_bunny.obj", glm::scale(glm::mat4(1.0), glm::vec3(8.0f)));
@@ -52,58 +59,61 @@ void BunnyWithShadows::show() {
     };
 
     // material properties
-    color_program.use();
-    color_program.set_vec3("material.ambient", bunny_color);
-    color_program.set_vec3("material.diffuse", bunny_color);
-    color_program.set_vec3("material.specular", glm::vec3(0.5f));
-    color_program.set_float("material.shininess", 32.0f);
+    lightning_program.use();
+    lightning_program.set_bool("blinn", true);
+    lightning_program.set_vec3("material.ambient", bunny_color);
+    lightning_program.set_vec3("material.diffuse", bunny_color);
+    lightning_program.set_vec3("material.specular", glm::vec3(0.5f));
+    lightning_program.set_float("material.shininess", 32.0f);
+
 
     do {
         window_->process_input();
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        color_program.use();
+        lightning_program.use();
 //        color_program.set_vec3("object_color", bunny_color);
 //        color_program.set_vec3("light_color",  glm::vec3(1.0f));
 
-        color_program.set_vec3("viewPos",  window_->camera_pos());
+        lightning_program.set_vec3("viewPos",  window_->camera_pos());
 
-        color_program.set_vec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
-        color_program.set_vec3("dirLight.ambient", glm::vec3( 0.05f));
-        color_program.set_vec3("dirLight.diffuse",  glm::vec3(0.4f));
-        color_program.set_vec3("dirLight.specular", glm::vec3(0.5f));
+        lightning_program.set_vec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+        lightning_program.set_vec3("dirLight.ambient", glm::vec3( 0.05f));
+        lightning_program.set_vec3("dirLight.diffuse",  glm::vec3(0.4f));
+        lightning_program.set_vec3("dirLight.specular", glm::vec3(0.5f));
 
-        color_program.set_vec3("pointLights[0].position", pointLightPositions[0]);
-        color_program.set_vec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
-        color_program.set_vec3("pointLights[0].diffuse", 0.8f, 0.8f, 0.8f);
-        color_program.set_vec3("pointLights[0].specular", 1.0f, 1.0f, 1.0f);
-        color_program.set_float("pointLights[0].constant", 1.0f);
-        color_program.set_float("pointLights[0].linear", 0.09);
-        color_program.set_float("pointLights[0].quadratic", 0.032);
+        lightning_program.set_vec3("pointLights[0].position", pointLightPositions[0]);
+        lightning_program.set_vec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
+        lightning_program.set_vec3("pointLights[0].diffuse", 0.8f, 0.8f, 0.8f);
+        lightning_program.set_vec3("pointLights[0].specular", 1.0f, 1.0f, 1.0f);
+        lightning_program.set_float("pointLights[0].constant", 1.0f);
+        lightning_program.set_float("pointLights[0].linear", 0.09);
+        lightning_program.set_float("pointLights[0].quadratic", 0.032);
 
-        color_program.set_vec3("pointLights[1].position", pointLightPositions[1]);
-        color_program.set_vec3("pointLights[1].ambient", 0.05f, 0.05f, 0.05f);
-        color_program.set_vec3("pointLights[1].diffuse", 0.8f, 0.8f, 0.8f);
-        color_program.set_vec3("pointLights[1].specular", 1.0f, 1.0f, 1.0f);
-        color_program.set_float("pointLights[1].constant", 1.0f);
-        color_program.set_float("pointLights[1].linear", 0.09);
-        color_program.set_float("pointLights[1].quadratic", 0.032);
+        lightning_program.set_vec3("pointLights[1].position", pointLightPositions[1]);
+        lightning_program.set_vec3("pointLights[1].ambient", 0.05f, 0.05f, 0.05f);
+        lightning_program.set_vec3("pointLights[1].diffuse", 0.8f, 0.8f, 0.8f);
+        lightning_program.set_vec3("pointLights[1].specular", 1.0f, 1.0f, 1.0f);
+        lightning_program.set_float("pointLights[1].constant", 1.0f);
+        lightning_program.set_float("pointLights[1].linear", 0.09);
+        lightning_program.set_float("pointLights[1].quadratic", 0.032);
 
-        color_program.set_vec3("spotLight.position", window_->camera_pos());
-        color_program.set_vec3("spotLight.direction", window_->camera_dir());
-        color_program.set_vec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
-        color_program.set_vec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
-        color_program.set_vec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
-        color_program.set_float("spotLight.constant", 1.0f);
-        color_program.set_float("spotLight.linear", 0.09);
-        color_program.set_float("spotLight.quadratic", 0.032);
-        color_program.set_float("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
-        color_program.set_float("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
+        lightning_program.set_vec3("spotLight.position", window_->camera_pos());
+        lightning_program.set_vec3("spotLight.direction", window_->camera_dir());
+        lightning_program.set_vec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
+        lightning_program.set_vec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
+        lightning_program.set_vec3("spotLight.specular", 1.0f, 1.0f, 1.0f);
+        lightning_program.set_float("spotLight.constant", 1.0f);
+        lightning_program.set_float("spotLight.linear", 0.09);
+        lightning_program.set_float("spotLight.quadratic", 0.032);
+        lightning_program.set_float("spotLight.cutOff", glm::cos(glm::radians(12.5f)));
+        lightning_program.set_float("spotLight.outerCutOff", glm::cos(glm::radians(15.0f)));
 
-        color_program.set_mat4("model", bunny_model.matrix());
-        color_program.set_mat4("view", window_->view_matrix());
-        color_program.set_mat4("projection", window_->projection_matrix());
+        lightning_program.set_mat4("model", bunny_model.matrix());
+        lightning_program.set_mat4("view", window_->view_matrix());
+        lightning_program.set_mat4("projection", window_->projection_matrix());
+
 
         bunny_model.draw();
 
@@ -122,7 +132,7 @@ void BunnyWithShadows::show() {
 
     } while (window_->should_not_end_loop());
 
-    color_program.delete_program();
+    lightning_program.delete_program();
     point_light_program.delete_program();
     bunny_model.delete_model();
     lamp_model.delete_model();

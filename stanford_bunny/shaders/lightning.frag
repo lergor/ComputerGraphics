@@ -48,9 +48,9 @@ struct SpotLight {
 in vec3 FragPos;
 in vec3 Normal;
 
+uniform bool blinn;
 uniform vec3 viewPos;
 uniform Material material;
-
 uniform DirLight dirLight;
 uniform PointLight pointLights[NR_POINT_LIGHTS];
 uniform SpotLight spotLight;
@@ -58,15 +58,22 @@ uniform SpotLight spotLight;
 vec3 phong_basic(vec3 light_ambient, vec3 light_diffuse, vec3 light_specular, vec3 lightDir) {
     vec3 ambient = light_ambient * material.ambient;
 
-    // diffuse
     vec3 norm = normalize(Normal);
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = light_diffuse * (diff * material.diffuse);
 
-    // specular
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+
+    float spec = 0.0;
+    if(blinn) {
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        spec = pow(max(dot(norm, halfwayDir), 0.0), material.shininess);
+    } else {
+        vec3 reflectDir = reflect(-lightDir, norm);
+        spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    }
+
     vec3 specular = light_specular * (spec * material.specular);
 
     return ambient + diffuse + specular;
