@@ -72,3 +72,7 @@ void Model::delete_model() {
 glm::mat4 Model::matrix() {
     return _model_matrix;
 }
+
+Model::Model() {
+
+}

@@ -13,6 +13,9 @@
 class Model {
 
 public:
+
+    Model();
+
     explicit Model(const char *path, glm::mat4 model_matrix = glm::mat4(0.1f));
 
     void draw();

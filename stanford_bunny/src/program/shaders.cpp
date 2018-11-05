@@ -1,5 +1,7 @@
 #include "shaders.h"
 
+Shaders::Shaders() {}
+
 Shaders::Shaders(const char *vertex_shader, const char *fragment_shader) {
     _vertex_shader_ID = glCreateShader(GL_VERTEX_SHADER);
     _fragment_shader_ID = glCreateShader(GL_FRAGMENT_SHADER);
@@ -113,4 +115,3 @@ void Shaders::set_mat3(const std::string &name, const glm::mat3 &mat) const {
 void Shaders::set_mat4(const std::string &name, const glm::mat4 &mat) const {
     glUniformMatrix4fv(glGetUniformLocation(_program_ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
-
