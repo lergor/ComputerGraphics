@@ -133,3 +133,7 @@ int Window::height() {
     return _height;
 }
 
+glm::vec3 Window::camera_dir() {
+    return _camera._direction;
+}
+
