@@ -68,6 +68,9 @@ add_executable(
         src/model/model.cpp src/model/model.h
         src/model/mesh.cpp src/model/mesh.h
         src/model/vertex.h
+
+        src/lightning/light.cpp src/lightning/light.h
+        src/lightning/material.cpp src/lightning/material.h
 )
 
 target_link_libraries(

@@ -1,7 +1,8 @@
 #include "model.h"
 
-Model::Model(const char *path, glm::mat4 model_matrix)
+Model::Model(const char *path, glm::mat4 model_matrix, Material material)
     : _model_matrix(model_matrix)
+    , _material(material)
 {
     load_model(path);
 }
@@ -63,7 +64,7 @@ Mesh Model::process_mesh(aiMesh *mesh) {
     return Mesh(vertices, indices);
 }
 
-void Model::delete_model() {
+void Model::clear() {
     for (auto &mesh : _meshes) {
         mesh.delete_mesh();
     }
@@ -73,6 +74,11 @@ glm::mat4 Model::matrix() {
     return _model_matrix;
 }
 
-Model::Model() {
+Material& Model::material() {
+    return _material;
+}
 
+void Model::import_parameters(Shaders &shader) {
+    _material.import_to_shader(shader);
+    shader.set_mat4("model", _model_matrix);
 }

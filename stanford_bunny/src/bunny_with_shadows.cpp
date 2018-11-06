@@ -1,7 +1,7 @@
 #include "bunny_with_shadows.h"
 
 BunnyWithShadows::BunnyWithShadows(int width, int height)
-        : window_width_(width), window_height_(height) {}
+        : _window_width(width), _window_height(height) {}
 
 void BunnyWithShadows::init() {
     glewExperimental = static_cast<GLboolean>(true);
@@ -11,7 +11,7 @@ void BunnyWithShadows::init() {
         return;
     }
 
-    window_ = Window::get_instance(window_width_, window_height_, "Stanford Bunny");
+    _window = Window::get_instance(_window_width, _window_height, "Stanford Bunny");
 
     glewExperimental = static_cast<GLboolean>(true);
     if (glewInit() != GLEW_OK) {
@@ -22,117 +22,114 @@ void BunnyWithShadows::init() {
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-    glEnable(GL_CULL_FACE);
+    glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+}
+
+void BunnyWithShadows::setup_models() {
+    glm::vec3 bunny_color = glm::vec3(0.03f, 0.5f, 0.3f);
+//    glm::vec3 plane_color = glm::vec3(0.2f, 0.0f, 0.4f);
+    glm::vec3 plane_color = glm::vec3(1.0f);
+
+    Material bunny_material(bunny_color, bunny_color, glm::vec3(0.5f), 32.0f);
+    glm::mat4 bunny_mat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.17f, 0.0f));
+    bunny_mat = glm::scale(bunny_mat, glm::vec3(5.0f));
+    bunny_model = Model("../resources/stanford_bunny.obj", bunny_mat, bunny_material);
+
+    Material cube_material(glm::vec3(0.05f), glm::vec3(0.8f), glm::vec3(1.0f), 32.0);
+    cube_model = Model("../resources/cube.obj", glm::mat4(1.0f));
+
+    glm::mat4 plane_mat = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f));
+    Material plane_material(plane_color, plane_color, glm::vec3(0.5f), 32.0f);
+    plane_model = Model("../resources/plane.obj", plane_mat, plane_material);
 }
 
 void BunnyWithShadows::show() {
-
     init();
-    glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 
     lightning_program = Shaders("../shaders/lightning.vert", "../shaders/lightning.frag");
     point_light_program = Shaders("../shaders/point_light.vert", "../shaders/point_light.frag");
-    shadow_depth_program = Shaders("../shaders/shadow_depth.vert", "../shaders/shadow_depth.frag");
+    shadow_depth_program = Shaders("../shaders/shadow_map_depth.vert", "../shaders/shadow_map_depth.frag");
 
-    glm::mat4 bunny_mat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f));
-    bunny_mat = glm::scale(bunny_mat, glm::vec3(8.0f));
-
-    bunny_model = Model("../resources/stanford_bunny.obj", bunny_mat);
-
-
-    cube_model = Model("../resources/cube.obj", glm::mat4(1.0f));
-
-    glm::mat4 plane_mat = glm::scale(glm::translate(glm::mat4(1.0f),
-                              glm::vec3(-2.5f, -4.7f, -2.5f)), glm::vec3(5.0f));
-    plane_model = Model("../resources/plane.obj", plane_mat);
-
+    setup_models();
     init_shadow_map();
 
-    lightning_program.use();
-    lightning_program.set_bool("blinn", true);
-    lightning_program.set_int("shadowMap", 1);
+    shadow_depth_program.use();
+    shadow_depth_program.set_int("shadowMap", 1);
+    shadow_depth_program.set_bool("blinn", true);
+
+    glm::vec3 lightPos = pointLightPositions[1];
 
     do {
-        window_->process_input();
+        _window->process_input();
 
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        lightSpaceMatrix = calculate_light_matrix(lightPos);
 
         shadow_depth_program.use();
         shadow_depth_program.set_mat4("lightSpaceMatrix", calculate_light_matrix(lightPos));
+
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, depth_map_FBO);
         glClear(GL_DEPTH_BUFFER_BIT);
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(1.0f, 1.0f);
-        glActiveTexture(GL_TEXTURE0);
-
         render_scene(shadow_depth_program);
-
         glDisable(GL_POLYGON_OFFSET_FILL);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        glViewport(0, 0, window_->width(), window_->height());
+        glViewport(0, 0, _window_width, _window_height);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // --------------------------------------------------------------
-
-        glViewport(0, 0, window_->width(), window_->height());
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glm::mat4 projection = _window->projection_matrix();
+        glm::mat4 view = _window->view_matrix();
 
         lightning_program.use();
-        lightning_program.set_mat4("view", window_->view_matrix());
-        lightning_program.set_mat4("projection", window_->projection_matrix());
+        lightning_program.set_mat4("projection", projection);
+        lightning_program.set_mat4("view", view);
         lightning_program.set_mat4("lightSpaceMatrix", calculate_light_matrix(lightPos));
-        lightning_program.set_vec3("viewPos",  window_->camera_pos());
-        lightning_program.set_vec3("lightPos", this->lightPos);
+        lightning_program.set_vec3("viewPos", _window->camera_pos());
+        lightning_program.set_vec3("lightPos", lightPos);
 
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
+        glBindTexture(GL_TEXTURE_2D, depth_map);
+
         render_scene(lightning_program);
 
-        render_point_lights();
+        render_point_light(pointLightPositions[0]);
+        render_point_light(pointLightPositions[1]);
 
-        window_->end_loop();
+        _window->end_loop();
 
-    } while (window_->should_not_end_loop());
+    } while(_window->should_not_end_loop());
 
-    lightning_program.delete_program();
-    point_light_program.delete_program();
-    shadow_depth_program.delete_program();
-    bunny_model.delete_model();
-    cube_model.delete_model();
-    plane_model.delete_model();
-    glfwTerminate();
+    finish();
 }
 
-void BunnyWithShadows::render_point_lights() {
-    for (auto pointLightPosition : pointLightPositions) {
-        lightning_program.use();
-        lightning_program.set_vec3("viewPos",  window_->camera_pos());
-        lightning_program.set_vec3("lightPos", lightPos);
-        lightning_program.set_vec3("light.position", pointLightPosition);
-        lightning_program.set_vec3("light.ambient", glm::vec3(0.2f));
-        lightning_program.set_vec3("light.diffuse",  glm::vec3(0.5f));
-        lightning_program.set_vec3("light.specular", glm::vec3(1.0f));
+void BunnyWithShadows::render_scene(Shaders program) {
+    plane_model.import_parameters(program);
+    plane_model.draw();
 
-        point_light_program.use();
-        lightning_program.set_mat4("lightSpaceMatrix", calculate_light_matrix(pointLightPosition));
-        point_light_program.set_mat4("view", window_->view_matrix());
-        point_light_program.set_mat4("projection", window_->projection_matrix());
+    bunny_model.import_parameters(program);
+    bunny_model.draw();
 
-        glm::mat4 model = glm::translate(glm::mat4(0.1f), pointLightPosition);
-        model = glm::scale(model, glm::vec3(0.3f));
-        point_light_program.set_mat4("model", model);
-        cube_model.draw();
-    }
+    program.use();
+    program.set_float("material.shininess", 0.25f);
+    program.set_vec3("material.ambient", glm::vec3(0.0f, 0.1f, 0.06f));
+    program.set_vec3("material.diffuse", glm::vec3(0.0f, 0.5f, 0.5f));
+    program.set_vec3("material.specular", glm::vec3(0.5f));
+
+    glm::mat4 model;
+    model = glm::translate(glm::mat4(1.0f), glm::vec3(1.0f, 0.0, -1.0f));
+    model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+    program.set_mat4("model", model);
+    cube_model.draw();
 }
 
 void BunnyWithShadows::init_shadow_map() {
-    glGenFramebuffers(1, &depthMapFBO);
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
+
+    glGenFramebuffers(1, &depth_map_FBO);
+    glGenTextures(1, &depth_map);
+    glBindTexture(GL_TEXTURE_2D, depth_map);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -140,45 +137,48 @@ void BunnyWithShadows::init_shadow_map() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, depth_map_FBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_map, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-glm::mat4 BunnyWithShadows::calculate_light_matrix(glm::vec3 lightPos) {
-    float near_plane = 1.0f, far_plane = 7.5f;
-    glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
-    glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
-    return lightProjection * lightView;
+void BunnyWithShadows::render_point_light(glm::vec3 position) {
+    lightning_program.use();
+    lightning_program.set_vec3("light.ambient", glm::vec3(0.05f));
+    lightning_program.set_vec3("light.diffuse", glm::vec3(1.0f));
+    lightning_program.set_vec3("light.specular", glm::vec3(1.0f));
+    lightning_program.set_vec3("light.position", position);
+
+    point_light_program.use();
+    point_light_program.set_mat4("projection", _window->projection_matrix());
+    point_light_program.set_mat4("view", _window->view_matrix());
+
+    glm::mat4 model = glm::mat4();
+    model = glm::translate(model, position);
+    model = glm::scale(model, glm::vec3(0.2f));
+    point_light_program.set_mat4("model", model);
+    cube_model.draw();
 }
 
-void BunnyWithShadows::render_scene(Shaders &shader) {
-    shader.use();
-    shader.set_vec3("viewPos",  window_->camera_pos());
-    shader.set_vec3("lightPos", lightPos);
-    shader.set_mat4("view", window_->view_matrix());
-    shader.set_mat4("projection", window_->projection_matrix());
-
-    glm::vec3 diffuseColor = glm::vec3(1.0f)   * glm::vec3(0.5f); // decrease the influence
-    glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
-    shader.set_vec3("light.ambient", ambientColor);
-    shader.set_vec3("light.diffuse", diffuseColor);
-    shader.set_vec3("light.specular", glm::vec3(1.0f));
-    shader.set_vec3("light.position", lightPos);
-
-    shader.set_vec3("material.ambient", bunny_color);
-    shader.set_vec3("material.diffuse", bunny_color);
-    shader.set_vec3("material.specular", glm::vec3(0.5f));
-    shader.set_float("material.shininess", 32.0f);
-    shader.set_mat4("model", bunny_model.matrix());
-    bunny_model.draw();
-
-    shader.set_vec3("material.ambient", plane_color);
-    shader.set_vec3("material.diffuse", plane_color);
-    shader.set_vec3("material.specular", glm::vec3(0.5f));
-    shader.set_float("material.shininess", 32.0f);
-    shader.set_mat4("model", plane_model.matrix());
-    plane_model.draw();
+void BunnyWithShadows::finish() {
+    bunny_model.clear();
+    plane_model.clear();
+    cube_model.clear();
+    point_light_program.finish();
+    shadow_depth_program.finish();
+    lightning_program.finish();
+    glfwTerminate();
 }
+
+glm::mat4 BunnyWithShadows::calculate_light_matrix(glm::vec3 light_pos) {
+    glm::mat4 light_projection, light_view;
+    float near_plane = 1.0f;
+    float far_plane = 7.5f;
+    light_projection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+    light_view = glm::lookAt(light_pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+    return light_projection * light_view;
+}
+
+

@@ -15,7 +15,7 @@ enum CameraMovement {
 const float YAW         = -90.0f;
 const float PITCH       =  0.0f;
 const float SPEED       =  3.0f;
-const float SENSITIVITY =  0.2f;
+const float SENSITIVITY =  0.5f;
 const float ZOOM        =  45.0f;
 
 class Camera {
@@ -42,18 +42,6 @@ public:
             , _position(position)
             , _world_up(up)
             , _yaw(yaw)
-            , _pitch(pitch)
-    {
-        update_vectors();
-    }
-
-    explicit Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch)
-            : _direction(glm::vec3(0.0f, 0.0f, -1.0f))
-            , _movement_speed(SPEED)
-            , _mouse_sensitivity(SENSITIVITY)
-            , _zoom(ZOOM)
-            , _position(glm::vec3(posX, posY, posZ))
-            , _world_up(glm::vec3(upX, upY, upZ))
             , _pitch(pitch)
     {
         update_vectors();

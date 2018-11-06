@@ -41,6 +41,10 @@ public:
 
     int height();
 
+    GLFWwindow * get_Window() {
+        return _window;
+    }
+
 private:
 
     Window(int width, int height, std::string const &name);

@@ -19,9 +19,12 @@ namespace {
 Window *Window::_instance = nullptr;
 
 Window::Window(int width, int height, std::string const &name)
-        : _width(width), _height(height), _camera(Camera(glm::vec3(0.0f, 1.5f, 5.0f))), _last_x(_width / 2),
-          _last_y(_height / 2) {
-    glfwWindowHint(GLFW_SAMPLES, 4); // nope
+        : _width(width)
+        , _height(height)
+        , _camera(Camera(glm::vec3(0.0f, 1.5f, 5.0f)))
+        , _last_x(_width / 2)
+        , _last_y(_height / 2) {
+    glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);

@@ -17,7 +17,7 @@ class Shaders {
 
 public:
 
-    Shaders();
+    Shaders() = default;
 
     Shaders(const char *vertex_shader, const char *fragment_shader);
 
@@ -49,7 +49,7 @@ public:
 
     void set_mat4(const std::string &name, const glm::mat4 &mat) const;
 
-    void delete_program();
+    void finish();
 
 private:
 

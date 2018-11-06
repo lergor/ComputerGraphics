@@ -1,7 +1,9 @@
 #include "mesh.h"
 
 Mesh::Mesh(std::vector<Vertex> const &vertices, std::vector<GLuint> const &indices)
-        : _vertices(vertices), _indices(indices) {
+        : _vertices(vertices)
+        , _indices(indices)
+{
     setup();
 }
 
@@ -37,3 +39,4 @@ void Mesh::delete_mesh() {
     glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
 }
+

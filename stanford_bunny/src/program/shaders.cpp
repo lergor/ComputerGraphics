@@ -1,11 +1,8 @@
 #include "shaders.h"
 
-Shaders::Shaders() {}
-
 Shaders::Shaders(const char *vertex_shader, const char *fragment_shader) {
     _vertex_shader_ID = glCreateShader(GL_VERTEX_SHADER);
     _fragment_shader_ID = glCreateShader(GL_FRAGMENT_SHADER);
-
     read_and_compile_shader(vertex_shader, _vertex_shader_ID);
     read_and_compile_shader(fragment_shader, _fragment_shader_ID);
 
@@ -32,15 +29,15 @@ GLuint Shaders::program_ID() {
     return _program_ID;
 }
 
-void Shaders::delete_program() {
+void Shaders::finish() {
     glDeleteProgram(_program_ID);
 }
 
 void Shaders::read_and_compile_shader(const char *path, GLuint id) {
-    printf("Compiling shader : %s\n", path);
+    printf("Compiling shader: %s", path);
     FILE *file;
     if (!(file = fopen(path, "r"))) {
-        fprintf(stderr, "Failed to open %s\n", path);
+        fprintf(stderr, "Failed to open%s", path);
         return;
     }
     char *buf;
@@ -66,7 +63,6 @@ void Shaders::check_info_log(GLuint id) {
         printf("%s\n", &error_message[0]);
     }
 }
-
 
 void Shaders::set_bool(const std::string &name, bool value) const {
     glUniform1i(glGetUniformLocation(_program_ID, name.c_str()), (int) value);
@@ -115,3 +111,4 @@ void Shaders::set_mat3(const std::string &name, const glm::mat3 &mat) const {
 void Shaders::set_mat4(const std::string &name, const glm::mat4 &mat) const {
     glUniformMatrix4fv(glGetUniformLocation(_program_ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
 }
+

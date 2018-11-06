@@ -12,6 +12,8 @@
 class Mesh {
 public:
 
+    Mesh() = default;
+
     Mesh(std::vector<Vertex> const &vertices, std::vector<GLuint> const &indices);
 
     void draw();
