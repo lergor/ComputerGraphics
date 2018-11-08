@@ -11,6 +11,7 @@
 #include "model/model.h"
 #include "program/shaders.h"
 #include "program/window.h"
+#include "lightning/light.h"
 
 class BunnyWithShadows {
 
@@ -22,7 +23,7 @@ public:
 
 private:
 
-    void init();
+    void init_window();
 
     void setup_models();
 
@@ -38,24 +39,17 @@ private:
     Shaders point_light_program;
     Shaders shadow_depth_program;
 
-    std::vector<glm::vec3> pointLightPositions = {
-            glm::vec3( 2.0f, 2.0f, -4.0f),
-            glm::vec3(0.0f, 4.0f, 5.0f)
-    };
+    Light _light;
 
-    glm::mat4 calculate_light_matrix(glm::vec3 light_pos);
-
-    unsigned int depth_map_FBO;
-    unsigned int depth_map;
     const unsigned int SHADOW_WIDTH = 1024;
     const unsigned int SHADOW_HEIGHT = 1024;
 
-    void render_scene(Shaders program);
+    void render_scene(Shaders &program);
 
     void finish();
 
-    void init_shadow_map();
+    void render_point_lights();
 
-    void render_point_light(glm::vec3 position);
+    void draw_shadows(Light &light);
 };
 

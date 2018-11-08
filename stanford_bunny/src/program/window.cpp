@@ -21,7 +21,7 @@ Window *Window::_instance = nullptr;
 Window::Window(int width, int height, std::string const &name)
         : _width(width)
         , _height(height)
-        , _camera(Camera(glm::vec3(0.0f, 1.5f, 5.0f)))
+        , _camera(Camera(glm::vec3(0.0f, 1.5f, 4.0f)))
         , _last_x(_width / 2)
         , _last_y(_height / 2) {
     glfwWindowHint(GLFW_SAMPLES, 4);
