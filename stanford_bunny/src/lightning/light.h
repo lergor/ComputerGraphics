@@ -14,15 +14,11 @@ public:
     Light() = default;
 
     explicit Light(glm::vec3 position,
-                   std::string const &prefix = "light",
+                   int index = 0,
+                   GLenum texture = GL_TEXTURE0,
                    glm::vec3 ambient = glm::vec3(0.05f),
                    glm::vec3 diffuse = glm::vec3(1.0f),
                    glm::vec3 specular = glm::vec3(1.0f));
-
-    void set_shadow_depth_program(Shaders *shadow_depth_program) {
-        this->shadow_depth_program = shadow_depth_program;
-    }
-
 
     void set_diffuse_color(glm::vec3 diffuse);
 
@@ -44,18 +40,24 @@ public:
 
     void import_parameters(Shaders &program);
 
-    GLuint depth_map_FBO;
+    GLuint depth_map_FBO();
 
-    GLuint depth_map;
+    GLuint depth_map();
+
+    GLenum texture_unit();
+
 private:
 
-    Shaders *shadow_depth_program;
+    GLuint _depth_map_FBO = 0;
+    GLuint _depth_map = 0;
+    GLenum _texture = 0;
 
     glm::vec3 _diffuse;
     glm::vec3 _ambient;
     glm::vec3 _specular;
     glm::vec3 _position;
     std::string _prefix;
+    int _index;
 
     void init_shadow_map();
 };

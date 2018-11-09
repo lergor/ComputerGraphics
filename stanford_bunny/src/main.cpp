@@ -5,6 +5,7 @@ const int WINDOW_HEIGHT = 600;
 
 //http://www.opengl-tutorial.org/
 //https://learnopengl.com/
+//https://triplepointfive.github.io/ogltutor/
 
 int main() {
     BunnyWithShadows bunny(WINDOW_WIDTH, WINDOW_HEIGHT);

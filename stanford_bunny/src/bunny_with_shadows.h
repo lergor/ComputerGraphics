@@ -39,7 +39,7 @@ private:
     Shaders point_light_program;
     Shaders shadow_depth_program;
 
-    Light _light;
+    std::vector<Light> _lights;
 
     const unsigned int SHADOW_WIDTH = 1024;
     const unsigned int SHADOW_HEIGHT = 1024;

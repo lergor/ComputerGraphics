@@ -10,6 +10,8 @@ struct Material {
     vec3 diffuse;
     vec3 specular;
     float shininess;
+    sampler2D shadowMap;
+
 };
 
 struct Light {
@@ -18,13 +20,16 @@ struct Light {
     vec3 diffuse;
     vec3 specular;
     mat4 lightSpaceMatrix;
+    sampler2D shadowMap;
+
 };
 
-uniform sampler2D shadowMap;
+#define NR_POINT_LIGHTS 2
+
 uniform bool blinn;
 uniform vec3 viewPos;
 uniform Material material;
-uniform Light light;
+uniform Light lights[NR_POINT_LIGHTS];
 
 float ShadowCalculation(Light light) {
     vec3 lightDir = normalize(light.position - FragPos);
@@ -33,17 +38,17 @@ float ShadowCalculation(Light light) {
     vec3 projCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
     projCoords = projCoords * 0.5 + 0.5;
 
-    float closestDepth = texture(shadowMap, projCoords.xy).r;
+    float closestDepth = texture(light.shadowMap, projCoords.xy).r;
     float currentDepth = projCoords.z;
     vec3 normal = normalize(Normal);
 
     float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
     float shadow = 0.0;
 
-    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    vec2 texelSize = 1.0 / textureSize(light.shadowMap, 0);
     for(int x = -1; x <= 1; ++x) {
         for(int y = -1; y <= 1; ++y) {
-            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+            float pcfDepth = texture(light.shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
             shadow += currentDepth - bias > pcfDepth  ? 0.7 : 0.0;
         }
     }
@@ -84,5 +89,10 @@ vec3 phong_basic(Light light) {
 }
 
 void main() {
-    FragColor = vec4(phong_basic(light), 1.0);
+
+    vec3 point_lightning = vec3(0.0f);
+    for(int i = 0; i < NR_POINT_LIGHTS; i++)
+        point_lightning += phong_basic(lights[i]);
+
+    FragColor = vec4(point_lightning, 1.0);
 }

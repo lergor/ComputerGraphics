@@ -27,8 +27,7 @@ void BunnyWithShadows::init_window() {
 
 void BunnyWithShadows::setup_models() {
     glm::vec3 bunny_color = glm::vec3(0.03f, 0.5f, 0.3f);
-    glm::vec3 plane_color = glm::vec3(0.8f, 0.8f, 0.8f);
-//    glm::vec3 plane_color = glm::vec3(1.0f);
+    glm::vec3 plane_color = glm::vec3(0.5f);
 
     Material bunny_material(bunny_color, bunny_color, glm::vec3(0.5f), 32.0f);
     glm::mat4 bunny_mat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.17f, 0.0f));
@@ -54,14 +53,14 @@ void BunnyWithShadows::show() {
 
     setup_models();
 
-    _light = Light(glm::vec3(-1.5f, 2.0f, 4.0f));
-
-    shadow_depth_program.use();
-    shadow_depth_program.set_int("shadowMap", 1);
-    shadow_depth_program.set_bool("blinn", true);
+    _lights.emplace_back(glm::vec3(0.0f, 4.0f, 5.0f), 0, GL_TEXTURE0);
+//    _lights.emplace_back(glm::vec3(2.0f, 2.0f, -2.0f), 1, GL_TEXTURE1);
 
     lightning_program.use();
-    _light.import_parameters(lightning_program);
+    lightning_program.set_bool("blinn", true);
+    for (auto light : _lights) {
+        light.import_parameters(lightning_program);
+    }
 
     do {
         _window->process_input();
@@ -69,19 +68,24 @@ void BunnyWithShadows::show() {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        draw_shadows(_light);
+        for(auto light : _lights) {
+            draw_shadows(light);
+        }
+
+        glViewport(0, 0, _window_width, _window_height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         lightning_program.use();
         lightning_program.set_mat4("projection", _window->projection_matrix());
         lightning_program.set_mat4("view", _window->view_matrix());
         lightning_program.set_vec3("viewPos", _window->camera_pos());
 
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, _light.depth_map);
-
+        for (auto light : _lights) {
+            glActiveTexture(light.texture_unit());
+            glBindTexture(GL_TEXTURE_2D, light.depth_map());
+        }
         render_scene(lightning_program);
         render_point_lights();
-
         _window->end_loop();
 
     } while (_window->should_not_end_loop());
@@ -110,30 +114,32 @@ void BunnyWithShadows::render_point_lights() {
     point_light_program.set_mat4("projection", _window->projection_matrix());
     point_light_program.set_mat4("view", _window->view_matrix());
 
-    glm::mat4 model = glm::mat4();
-    model = glm::translate(glm::mat4(), _light.position());
-    model = glm::scale(model, glm::vec3(0.2f));
-    point_light_program.set_mat4("model", model);
-    cube_model.draw();
+    for (auto light : _lights) {
+        glm::mat4 model;
+        model = glm::translate(glm::mat4(), light.position());
+        model = glm::scale(model, glm::vec3(0.2f));
+        point_light_program.set_mat4("model", model);
+        cube_model.draw();
+    }
 }
 
 void BunnyWithShadows::draw_shadows(Light &light) {
 
-    shadow_depth_program.use();
-    shadow_depth_program.set_mat4("lightSpaceMatrix", light.light_VP_matrix());
-
+    glBindFramebuffer(GL_FRAMEBUFFER, light.depth_map_FBO());
     glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-    glBindFramebuffer(GL_FRAMEBUFFER, light.depth_map_FBO);
 
-    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(1.0f, 1.0f);
+
+    shadow_depth_program.use();
+    shadow_depth_program.set_mat4("lightSpaceMatrix", light.light_VP_matrix());
     render_scene(shadow_depth_program);
+
     glDisable(GL_POLYGON_OFFSET_FILL);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    glViewport(0, 0, _window_width, _window_height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void BunnyWithShadows::finish() {
@@ -145,3 +151,4 @@ void BunnyWithShadows::finish() {
     lightning_program.finish();
     glfwTerminate();
 }
+

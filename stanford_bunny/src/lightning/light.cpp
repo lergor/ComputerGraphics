@@ -1,12 +1,15 @@
 #include "light.h"
 
 Light::Light(glm::vec3 position,
-             std::string const &prefix,
+             int index,
+             GLenum texture,
              glm::vec3 ambient,
              glm::vec3 diffuse,
              glm::vec3 specular)
         : _position(position)
-        , _prefix(prefix)
+        , _index(index)
+        , _prefix("lights[" + std::to_string(index) + "]")
+        , _texture(texture)
         , _ambient(ambient)
         , _diffuse(diffuse)
         , _specular(specular)
@@ -61,11 +64,11 @@ glm::mat4 Light::depth_bias_VP() {
 
 void Light::init_shadow_map() {
 
-    glGenFramebuffers(1, &depth_map_FBO);
-    glBindFramebuffer(GL_FRAMEBUFFER, depth_map_FBO);
+    glGenFramebuffers(1, &_depth_map_FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, _depth_map_FBO);
 
-    glGenTextures(1, &depth_map);
-    glBindTexture(GL_TEXTURE_2D, depth_map);
+    glGenTextures(1, &_depth_map);
+    glBindTexture(GL_TEXTURE_2D, _depth_map);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 1024, 1024, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -78,7 +81,7 @@ void Light::init_shadow_map() {
     float borderColor[] = {1.0, 1.0, 1.0, 1.0};
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_map, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _depth_map, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -91,4 +94,18 @@ void Light::import_parameters(Shaders &program) {
     program.set_vec3(_prefix + ".specular", _specular);
     program.set_vec3(_prefix + ".position", _position);
     program.set_mat4(_prefix + ".lightSpaceMatrix", light_VP_matrix());
+    program.set_int(".shadowMap", _index);
+
+}
+
+GLuint Light::depth_map_FBO() {
+    return _depth_map_FBO;
+}
+
+GLuint Light::depth_map() {
+    return _depth_map;
+}
+
+GLenum Light::texture_unit() {
+    return _texture;
 }
