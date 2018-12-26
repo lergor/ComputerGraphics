@@ -22,7 +22,7 @@ void BunnyWithShadows::init_window() {
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearColor(b_clr[0], b_clr[1], b_clr[2], b_clr[3]);
 }
 
 void BunnyWithShadows::setup_models() {
@@ -32,7 +32,7 @@ void BunnyWithShadows::setup_models() {
     Material bunny_material(bunny_color, bunny_color, glm::vec3(0.5f), 32.0f);
     glm::mat4 bunny_mat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.17f, 0.0f));
     bunny_mat = glm::scale(bunny_mat, glm::vec3(5.0f));
-    bunny_model = Model("../resources/stanford_bunny.obj", bunny_mat, bunny_material);
+    bunny_model = Model("../resources/stanford_bunny.obj", bunny_mat, bunny_material, true);
 
     glm::mat4 cube_mat = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.0f, 0.5f));
     cube_mat = glm::scale(cube_mat, glm::vec3(0.6f));
@@ -65,7 +65,7 @@ void BunnyWithShadows::show() {
     do {
         _window->process_input();
 
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(b_clr[0], b_clr[1], b_clr[2], b_clr[3]);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         for(auto light : _lights) {

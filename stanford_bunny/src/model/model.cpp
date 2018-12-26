@@ -1,9 +1,7 @@
 #include "model.h"
 
-Model::Model(const char *path, glm::mat4 model_matrix, Material material)
-    : _model_matrix(model_matrix)
-    , _material(material)
-{
+Model::Model(const char *path, glm::mat4 model_matrix, Material material, bool rotating)
+        : _model_matrix(model_matrix), _material(material), _rotating(rotating) {
     load_model(path);
 }
 
@@ -11,6 +9,8 @@ void Model::draw() {
     for (auto &mesh : _meshes) {
         mesh.draw();
     }
+    if (_rotating)
+        rotate();
 }
 
 void Model::load_model(const std::string &path) {
@@ -43,14 +43,14 @@ Mesh Model::process_mesh(aiMesh *mesh) {
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
         Vertex vertex{};
         vertex.position = {
-            mesh->mVertices[i].x,
-            mesh->mVertices[i].y,
-            mesh->mVertices[i].z
+                mesh->mVertices[i].x,
+                mesh->mVertices[i].y,
+                mesh->mVertices[i].z
         };
         vertex.normal = {
-            mesh->mNormals[i].x,
-            mesh->mNormals[i].y,
-            mesh->mNormals[i].z
+                mesh->mNormals[i].x,
+                mesh->mNormals[i].y,
+                mesh->mNormals[i].z
         };
         vertices.push_back(vertex);
     }
@@ -74,11 +74,20 @@ glm::mat4 Model::matrix() {
     return _model_matrix;
 }
 
-Material& Model::material() {
+Material &Model::material() {
     return _material;
 }
 
 void Model::import_parameters(Shaders &shader) {
     _material.import_to_shader(shader);
     shader.set_mat4("model", _model_matrix);
+}
+
+void Model::rotate() {
+    auto current_time = static_cast<float>(glfwGetTime());
+    float delta_time = current_time - _last_time;
+    _last_time = current_time;
+    _orientation.y = 3.14159f / 2.0f * delta_time;
+    glm::mat4 rotation_mat = glm::eulerAngleYXZ(_orientation.y, _orientation.x, _orientation.z);
+    _model_matrix = rotation_mat * _model_matrix;
 }

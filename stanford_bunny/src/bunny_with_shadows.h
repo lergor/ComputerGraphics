@@ -43,6 +43,7 @@ private:
 
     const unsigned int SHADOW_WIDTH = 1024;
     const unsigned int SHADOW_HEIGHT = 1024;
+    const float b_clr[4] = {0.1f, 0.1f, 0.25f, 1.0f}; // background color
 
     void render_scene(Shaders &program);
 
