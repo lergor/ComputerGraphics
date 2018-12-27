@@ -93,9 +93,11 @@ void Light::import_parameters(Shaders &program) {
     program.set_vec3(_prefix + ".diffuse", _diffuse);
     program.set_vec3(_prefix + ".specular", _specular);
     program.set_vec3(_prefix + ".position", _position);
+    program.set_float(_prefix + ".constant", 1.0f);
+    program.set_float(_prefix + ".linear", 0.09);
+    program.set_float(_prefix + ".quadratic", 0.032);
     program.set_mat4(_prefix + ".lightSpaceMatrix", light_VP_matrix());
-    program.set_int(".shadowMap", _index);
-
+    program.set_int(".shadowMap", _texture);
 }
 
 GLuint Light::depth_map_FBO() {

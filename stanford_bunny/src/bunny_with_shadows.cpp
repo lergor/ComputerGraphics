@@ -53,14 +53,18 @@ void BunnyWithShadows::show() {
 
     setup_models();
 
-    _lights.emplace_back(glm::vec3(0.0f, 4.0f, 5.0f), 0, GL_TEXTURE0);
-//    _lights.emplace_back(glm::vec3(2.0f, 2.0f, -2.0f), 1, GL_TEXTURE1);
+    _lights.emplace_back(glm::vec3(0.0f, 4.0f, 5.0f), 0, GL_TEXTURE0); // front
+    _lights.emplace_back(glm::vec3(2.0f, 2.0f, -2.0f), 1, GL_TEXTURE1); // back
 
     lightning_program.use();
     lightning_program.set_bool("blinn", true);
     for (auto light : _lights) {
         light.import_parameters(lightning_program);
     }
+    lightning_program.set_vec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+    lightning_program.set_vec3("dirLight.ambient", glm::vec3( 0.02f));
+    lightning_program.set_vec3("dirLight.diffuse",  glm::vec3(0.5f));
+    lightning_program.set_vec3("dirLight.specular", glm::vec3(0.5f));
 
     do {
         _window->process_input();
@@ -83,8 +87,11 @@ void BunnyWithShadows::show() {
         for (auto light : _lights) {
             glActiveTexture(light.texture_unit());
             glBindTexture(GL_TEXTURE_2D, light.depth_map());
+            lightning_program.set_mat4("lightSpaceMatrix", light.light_VP_matrix());
+            lightning_program.set_int("gShadowMap", light.texture_unit());
+            render_scene(lightning_program);
         }
-        render_scene(lightning_program);
+
         render_point_lights();
         _window->end_loop();
 
